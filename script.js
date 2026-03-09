@@ -115,6 +115,7 @@
       warningsFlash: 0,
       activity: [],
       currentKeyword: "",
+      currentKeyId: "",
       tool: TOOL.INSPECT,
       upgrades: {
         networkSpeed: 0,
@@ -246,15 +247,60 @@
     return merged;
   }
 
+  async function keywordToKeyId(keyword) {
+    const text = `dct:${keyword}`;
+    if (window.crypto?.subtle) {
+      const data = new TextEncoder().encode(text);
+      const digest = await window.crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(digest))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+    return `legacy_${btoa(text).replace(/=/g, "")}`;
+  }
+
+  function canUseRemoteStorage() {
+    return window.location.protocol === "https:" || window.location.hostname === "localhost";
+  }
+
+  async function loadProfileRemote(keyId) {
+    if (!canUseRemoteStorage()) return null;
+    const res = await fetch(`/api/load?key=${encodeURIComponent(keyId)}`, {
+      method: "GET",
+      cache: "no-store"
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`remote_load_${res.status}`);
+    const payload = await res.json();
+    return payload?.save || null;
+  }
+
+  async function saveProfileRemote(keyId, savePayload) {
+    if (!canUseRemoteStorage()) return false;
+    const res = await fetch("/api/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: keyId, save: savePayload })
+    });
+    if (!res.ok) throw new Error(`remote_save_${res.status}`);
+    return true;
+  }
+
   function saveGame() {
     if (!state?.currentKeyword) return;
+    const payload = packStateForSave(state);
     const db = getSaveDb();
     db.profiles[state.currentKeyword] = {
-      data: packStateForSave(state),
+      data: payload,
       updatedAt: Date.now()
     };
     setSaveDb(db);
     localStorage.setItem(LAST_KEYWORD_KEY, state.currentKeyword);
+    if (state.currentKeyId) {
+      saveProfileRemote(state.currentKeyId, payload).catch(() => {
+        // Keep silent; local save remains the fallback.
+      });
+    }
   }
 
   function refreshKeywordStatus() {
@@ -277,16 +323,30 @@
     }
   }
 
-  function loadOrCreateByKeyword(rawKeyword) {
+  async function loadOrCreateByKeyword(rawKeyword) {
     const keyword = normalizeKeyword(rawKeyword);
     if (!keyword) {
       showToast("Enter a valid keyword", "bad");
       return;
     }
 
-    const existing = loadProfile(keyword);
+    const keyId = await keywordToKeyId(keyword);
+    let existing = null;
+    try {
+      const remoteSave = await loadProfileRemote(keyId);
+      if (remoteSave) {
+        existing = restoreState(remoteSave);
+      }
+    } catch (err) {
+      showToast("Remote save unavailable, using local backup.", "warn");
+    }
+    if (!existing) {
+      existing = loadProfile(keyword);
+    }
+
     state = existing || createDefaultState();
     state.currentKeyword = keyword;
+    state.currentKeyId = keyId;
     running = true;
     paused = false;
     selected = null;
@@ -1336,9 +1396,11 @@
       if (!state?.currentKeyword) return;
       if (!confirm(`Delete save profile "${state.currentKeyword}" and start fresh?`)) return;
       const oldKey = state.currentKeyword;
+      const oldKeyId = state.currentKeyId;
       deleteProfile(oldKey);
       state = createDefaultState();
       state.currentKeyword = oldKey;
+      state.currentKeyId = oldKeyId;
       running = true;
       paused = false;
       selected = null;
@@ -1354,13 +1416,17 @@
     });
 
     el.loadKeywordBtn.addEventListener("click", () => {
-      loadOrCreateByKeyword(el.keywordInput.value);
+      loadOrCreateByKeyword(el.keywordInput.value).catch(() => {
+        showToast("Could not open profile", "bad");
+      });
     });
 
     el.keywordInput.addEventListener("keydown", (evt) => {
       if (evt.key === "Enter") {
         evt.preventDefault();
-        loadOrCreateByKeyword(el.keywordInput.value);
+        loadOrCreateByKeyword(el.keywordInput.value).catch(() => {
+          showToast("Could not open profile", "bad");
+        });
       }
     });
 
@@ -1371,9 +1437,11 @@
 
     el.loadAutosaveBtn.addEventListener("click", () => {
       const keyword = state?.currentKeyword;
+      const keyId = state?.currentKeyId;
       const loaded = keyword ? loadProfile(keyword) : null;
       state = loaded || createDefaultState();
       state.currentKeyword = keyword || "default";
+      state.currentKeyId = keyId || "";
       paused = false;
       el.pauseBtn.textContent = "Pause";
       el.failureOverlay.classList.remove("show");
@@ -1382,8 +1450,10 @@
 
     el.restartBtn.addEventListener("click", () => {
       const currentKeyword = state?.currentKeyword || normalizeKeyword(el.keywordInput.value) || "default";
+      const currentKeyId = state?.currentKeyId || "";
       state = createDefaultState();
       state.currentKeyword = currentKeyword;
+      state.currentKeyId = currentKeyId;
       paused = false;
       el.pauseBtn.textContent = "Pause";
       el.failureOverlay.classList.remove("show");

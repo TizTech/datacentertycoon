@@ -339,6 +339,28 @@ body {
   line-height: 1.45;
 }
 
+.text-input {
+  width: 100%;
+  border: 1px solid #456092;
+  background: #0f1729;
+  color: #e0ebff;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.text-input:focus {
+  border-color: #79b1ff;
+  box-shadow: 0 0 0 2px rgba(98, 162, 255, 0.2);
+}
+
+.status-line {
+  margin: 8px 0 0;
+  color: #9fc1ff;
+  font-size: 0.85rem;
+}
+
 .modal-actions {
   display: flex;
   gap: 8px;

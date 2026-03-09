@@ -1,10 +1,9 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "dct_save_v1";
-  const AUTOSAVE_KEY = "dct_autosave_v1";
+  const SAVE_DB_KEY = "dct_save_db_v1";
+  const LAST_KEYWORD_KEY = "dct_last_keyword_v1";
   const TUTORIAL_KEY = "dct_tutorial_seen";
-  const OPTIMAL_MARKER_KEY = "dct_optimal_save_installed_v1";
 
   const COLS = 20;
   const ROWS = 14;
@@ -55,11 +54,13 @@
     pauseBtn: document.getElementById("pauseBtn"),
     saveBtn: document.getElementById("saveBtn"),
     resetBtn: document.getElementById("resetBtn"),
+    switchProfileBtn: document.getElementById("switchProfileBtn"),
     toolbar: document.getElementById("toolbar"),
     upgradesBtn: document.getElementById("upgradesBtn"),
     startOverlay: document.getElementById("startOverlay"),
-    newGameBtn: document.getElementById("newGameBtn"),
-    continueBtn: document.getElementById("continueBtn"),
+    keywordInput: document.getElementById("keywordInput"),
+    keywordStatus: document.getElementById("keywordStatus"),
+    loadKeywordBtn: document.getElementById("loadKeywordBtn"),
     tutorialOverlay: document.getElementById("tutorialOverlay"),
     tutorialCloseBtn: document.getElementById("tutorialCloseBtn"),
     upgradeOverlay: document.getElementById("upgradeOverlay"),
@@ -113,6 +114,7 @@
       collapseMeter: 0,
       warningsFlash: 0,
       activity: [],
+      currentKeyword: "",
       tool: TOOL.INSPECT,
       upgrades: {
         networkSpeed: 0,
@@ -123,90 +125,79 @@
     };
   }
 
-  function createOptimalState() {
-    const s = createDefaultState();
-    s.money = 1200;
-    s.totalPackets = 1500;
-    s.totalRevenue = 9000;
-    s.timeSeconds = 780;
-    s.upgrades = {
-      networkSpeed: 2,
-      coolingEfficiency: 2,
-      powerEfficiency: 2,
-      packetValue: 2
-    };
-
-    const setCable = (x, y) => {
-      if (!inBounds(x, y) || s.base[y][x] !== BASE.FLOOR) return;
-      s.entities[y][x] = { type: ENTITY.CABLE, variantId: 6 };
-    };
-
-    const setPower = (x, y) => {
-      if (!inBounds(x, y) || s.base[y][x] !== BASE.FLOOR || s.entities[y][x]) return;
-      s.entities[y][x] = { type: ENTITY.POWER };
-    };
-
-    const setCooling = (x, y) => {
-      if (!inBounds(x, y) || s.base[y][x] !== BASE.FLOOR || s.entities[y][x]) return;
-      s.entities[y][x] = { type: ENTITY.COOLING };
-    };
-
-    const setRack = (x, y, level = 2) => {
-      if (!inBounds(x, y) || s.base[y][x] !== BASE.FLOOR || s.entities[y][x]) return;
-      const invested = level >= 2 ? COSTS.rack + COSTS.rackUpgradeBase : COSTS.rack;
-      s.entities[y][x] = {
-        type: ENTITY.RACK,
-        id: s.rackIdCounter++,
-        level,
-        totalInvested: invested,
-        genTimer: 0,
-        totalPackets: 0,
-        totalProfit: 0,
-        status: "idle",
-        connected: false,
-        powerRatio: 0,
-        coolingRatio: 0
-      };
-    };
-
-    for (let x = 4; x <= 16; x += 1) setCable(x, 6);
-    for (let x = 6; x <= 15; x += 1) setCable(x, 10);
-    for (let y = 2; y <= 10; y += 1) setCable(16, y);
-    for (let y = 6; y <= 10; y += 1) setCable(6, y);
-    for (let y = 6; y <= 10; y += 1) setCable(15, y);
-
-    [[7, 5], [11, 5], [15, 5], [9, 9], [13, 9]].forEach(([x, y]) => setPower(x, y));
-    [[7, 7], [11, 7], [15, 7], [9, 11], [13, 11]].forEach(([x, y]) => setCooling(x, y));
-
-    [
-      [5, 5], [6, 5], [8, 5], [9, 5], [10, 5], [12, 5], [13, 5], [14, 5],
-      [5, 7], [6, 7], [8, 7], [9, 7], [10, 7], [12, 7], [13, 7], [14, 7],
-      [7, 9], [8, 9], [10, 9], [11, 9], [12, 9], [14, 9],
-      [7, 11], [8, 11], [10, 11], [11, 11], [12, 11], [14, 11]
-    ].forEach(([x, y]) => setRack(x, y, 2));
-
-    const originalState = state;
-    state = s;
-    for (let y = 0; y < ROWS; y += 1) {
-      for (let x = 0; x < COLS; x += 1) {
-        const ent = s.entities[y][x];
-        if (ent && ent.type === ENTITY.CABLE) {
-          recalcCableVariantsAround(x, y);
-        }
-      }
-    }
-    state = originalState;
-
-    return s;
+  function normalizeKeyword(raw) {
+    return String(raw || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "")
+      .slice(0, 24);
   }
 
-  function installOptimalSaveOnce() {
-    if (localStorage.getItem(OPTIMAL_MARKER_KEY)) return;
-    const optimal = createOptimalState();
-    const payload = JSON.stringify(packStateForSave(optimal));
-    localStorage.setItem(STORAGE_KEY, payload);
-    localStorage.setItem(AUTOSAVE_KEY, payload);
-    localStorage.setItem(OPTIMAL_MARKER_KEY, "1");
+  function getSaveDb() {
+    try {
+      const raw = localStorage.getItem(SAVE_DB_KEY);
+      if (!raw) return { profiles: {} };
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || !parsed.profiles) return { profiles: {} };
+      return parsed;
+    } catch (err) {
+      console.warn("Failed to parse save DB", err);
+      return { profiles: {} };
+    }
+  }
+
+  function setSaveDb(db) {
+    localStorage.setItem(SAVE_DB_KEY, JSON.stringify(db));
+  }
+
+  function getAllKeywords() {
+    const db = getSaveDb();
+    return Object.keys(db.profiles).sort((a, b) => {
+      const ta = db.profiles[a]?.updatedAt || 0;
+      const tb = db.profiles[b]?.updatedAt || 0;
+      return tb - ta;
+    });
+  }
+
+  function loadProfile(keyword) {
+    const db = getSaveDb();
+    const entry = db.profiles[keyword];
+    if (!entry) return null;
+    const restored = restoreState(entry.data);
+    restored.currentKeyword = keyword;
+    return restored;
+  }
+
+  function deleteProfile(keyword) {
+    const db = getSaveDb();
+    delete db.profiles[keyword];
+    setSaveDb(db);
+  }
+
+  function migrateLegacySingleSaveIfPresent() {
+    const legacyKeys = ["dct_save_v1", "dct_autosave_v1"];
+    const hasDb = getAllKeywords().length > 0;
+    if (hasDb) return;
+
+    let payload = null;
+    for (const key of legacyKeys) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        payload = raw;
+        break;
+      }
+    }
+    if (!payload) return;
+
+    try {
+      const data = JSON.parse(payload);
+      const db = getSaveDb();
+      db.profiles.legacy = { data, updatedAt: Date.now() };
+      setSaveDb(db);
+      localStorage.setItem(LAST_KEYWORD_KEY, "legacy");
+    } catch (err) {
+      console.warn("Legacy migration failed", err);
+    }
   }
 
   function packStateForSave(s) {
@@ -255,55 +246,61 @@
     return merged;
   }
 
-  function saveGame(isAuto = false) {
-    const payload = JSON.stringify(packStateForSave(state));
-    localStorage.setItem(STORAGE_KEY, payload);
-    if (isAuto) {
-      localStorage.setItem(AUTOSAVE_KEY, payload);
+  function saveGame() {
+    if (!state?.currentKeyword) return;
+    const db = getSaveDb();
+    db.profiles[state.currentKeyword] = {
+      data: packStateForSave(state),
+      updatedAt: Date.now()
+    };
+    setSaveDb(db);
+    localStorage.setItem(LAST_KEYWORD_KEY, state.currentKeyword);
+  }
+
+  function refreshKeywordStatus() {
+    const keys = getAllKeywords();
+    if (!keys.length) {
+      el.keywordStatus.textContent = "No saves yet. Enter any keyword to create one.";
+      return;
+    }
+    const preview = keys.slice(0, 4).join(", ");
+    el.keywordStatus.textContent = `Stored profiles (${keys.length}): ${preview}`;
+  }
+
+  function openKeywordOverlay() {
+    el.startOverlay.classList.add("show");
+    const last = localStorage.getItem(LAST_KEYWORD_KEY) || "";
+    el.keywordInput.value = last;
+    refreshKeywordStatus();
+    if (running) {
+      paused = true;
+      el.pauseBtn.textContent = "Resume";
     }
   }
 
-  function loadSave(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      return restoreState(JSON.parse(raw));
-    } catch (err) {
-      console.warn("Failed to load save", err);
-      return null;
+  function loadOrCreateByKeyword(rawKeyword) {
+    const keyword = normalizeKeyword(rawKeyword);
+    if (!keyword) {
+      showToast("Enter a valid keyword", "bad");
+      return;
     }
-  }
 
-  function startNewGame() {
-    state = createDefaultState();
+    const existing = loadProfile(keyword);
+    state = existing || createDefaultState();
+    state.currentKeyword = keyword;
     running = true;
     paused = false;
     selected = null;
     setTool(TOOL.INSPECT);
     displayMoney = state.money;
     el.pauseBtn.textContent = "Pause";
-    pushActivity("New game started.", "good");
+    pushActivity(existing ? `Loaded profile "${keyword}".` : `Created profile "${keyword}".`, "good");
+    showToast(existing ? `Loaded: ${keyword}` : `New save: ${keyword}`, "good");
+    saveGame();
     el.startOverlay.classList.remove("show");
     if (!localStorage.getItem(TUTORIAL_KEY)) {
       el.tutorialOverlay.classList.add("show");
     }
-  }
-
-  function continueGame() {
-    const loaded = loadSave(STORAGE_KEY) || loadSave(AUTOSAVE_KEY);
-    state = loaded || createDefaultState();
-    running = true;
-    paused = false;
-    selected = null;
-    setTool(state.tool || TOOL.INSPECT);
-    displayMoney = state.money;
-    el.pauseBtn.textContent = "Pause";
-    pushActivity("Loaded save.", "good");
-    el.startOverlay.classList.remove("show");
-  }
-
-  function canContinue() {
-    return !!(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(AUTOSAVE_KEY));
   }
 
   function inBounds(x, y) {
@@ -1332,21 +1329,41 @@
 
     el.saveBtn.addEventListener("click", () => {
       if (!state) return;
-      saveGame(false);
-      saveGame(true);
+      saveGame();
+      showToast(`Saved "${state.currentKeyword}"`, "good");
     });
 
     el.resetBtn.addEventListener("click", () => {
-      if (!confirm("Delete save and autosave, then start a new game?")) return;
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(AUTOSAVE_KEY);
-      localStorage.removeItem(TUTORIAL_KEY);
-      localStorage.removeItem(OPTIMAL_MARKER_KEY);
-      startNewGame();
+      if (!state?.currentKeyword) return;
+      if (!confirm(`Delete save profile "${state.currentKeyword}" and start fresh?`)) return;
+      const oldKey = state.currentKeyword;
+      deleteProfile(oldKey);
+      state = createDefaultState();
+      state.currentKeyword = oldKey;
+      running = true;
+      paused = false;
+      selected = null;
+      setTool(TOOL.INSPECT);
+      displayMoney = state.money;
+      saveGame();
+      pushActivity(`Profile "${oldKey}" reset.`, "warn");
+      showToast(`Reset "${oldKey}"`, "warn");
     });
 
-    el.newGameBtn.addEventListener("click", startNewGame);
-    el.continueBtn.addEventListener("click", continueGame);
+    el.switchProfileBtn.addEventListener("click", () => {
+      openKeywordOverlay();
+    });
+
+    el.loadKeywordBtn.addEventListener("click", () => {
+      loadOrCreateByKeyword(el.keywordInput.value);
+    });
+
+    el.keywordInput.addEventListener("keydown", (evt) => {
+      if (evt.key === "Enter") {
+        evt.preventDefault();
+        loadOrCreateByKeyword(el.keywordInput.value);
+      }
+    });
 
     el.tutorialCloseBtn.addEventListener("click", () => {
       el.tutorialOverlay.classList.remove("show");
@@ -1354,18 +1371,24 @@
     });
 
     el.loadAutosaveBtn.addEventListener("click", () => {
-      const loaded = loadSave(AUTOSAVE_KEY) || createDefaultState();
-      state = loaded;
+      const keyword = state?.currentKeyword;
+      const loaded = keyword ? loadProfile(keyword) : null;
+      state = loaded || createDefaultState();
+      state.currentKeyword = keyword || "default";
       paused = false;
       el.pauseBtn.textContent = "Pause";
       el.failureOverlay.classList.remove("show");
+      pushActivity(`Recovered profile "${state.currentKeyword}" after failure.`, "warn");
     });
 
     el.restartBtn.addEventListener("click", () => {
+      const currentKeyword = state?.currentKeyword || normalizeKeyword(el.keywordInput.value) || "default";
       state = createDefaultState();
+      state.currentKeyword = currentKeyword;
       paused = false;
       el.pauseBtn.textContent = "Pause";
       el.failureOverlay.classList.remove("show");
+      saveGame();
     });
 
     // Close overlays by clicking dim background.
@@ -1385,12 +1408,8 @@
   function init() {
     state = createDefaultState();
     displayMoney = state.money;
-    installOptimalSaveOnce();
-
-    el.continueBtn.disabled = !canContinue();
-    if (!canContinue()) {
-      el.continueBtn.textContent = "No Save Found";
-    }
+    migrateLegacySingleSaveIfPresent();
+    openKeywordOverlay();
 
     bindEvents();
     setTool(TOOL.INSPECT);

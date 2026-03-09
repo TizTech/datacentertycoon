@@ -21,6 +21,7 @@
         </div>
       </div>
       <div class="hud-right">
+        <button id="switchProfileBtn" class="ui-btn">Switch Save</button>
         <button id="pauseBtn" class="ui-btn">Pause</button>
         <button id="saveBtn" class="ui-btn">Save</button>
         <button id="resetBtn" class="ui-btn danger">Reset Save</button>
@@ -73,17 +74,17 @@
 
   <div class="overlay show" id="startOverlay">
     <div class="modal">
-      <h2>Data Center Tycoon</h2>
-      <p>Build a compact, efficient network. Deliver packets to the hub to earn money.</p>
+      <h2>Load Save Profile</h2>
+      <p>Enter your keyword to load that save profile. If it does not exist yet, a new save is created.</p>
       <ul>
-        <li>1. Place <strong>Power</strong> and <strong>Cooling</strong></li>
-        <li>2. Place <strong>Cables</strong> connected to the hub</li>
-        <li>3. Place a <strong>Server Rack</strong> on the cable network</li>
-        <li>4. Upgrade and scale without overheating</li>
+        <li>1. Use the same keyword to continue progress.</li>
+        <li>2. Use a different keyword for a separate save.</li>
+        <li>3. All profiles are stored locally in your browser.</li>
       </ul>
+      <input id="keywordInput" class="text-input" type="text" maxlength="24" placeholder="Enter keyword (example: alpha)" />
+      <p id="keywordStatus" class="status-line"></p>
       <div class="modal-actions">
-        <button id="newGameBtn" class="ui-btn primary">New Game</button>
-        <button id="continueBtn" class="ui-btn">Continue Save</button>
+        <button id="loadKeywordBtn" class="ui-btn primary">Load / Create Save</button>
       </div>
     </div>
   </div>

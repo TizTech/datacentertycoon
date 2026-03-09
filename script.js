@@ -82,6 +82,7 @@
   let simAccumulator = 0;
   let displayMoney = 0;
   let lastNoMoneyToastAt = 0;
+  let hudSnapshot = null;
 
   function createDefaultState() {
     const base = [];
@@ -694,6 +695,15 @@
     }, 1600);
   }
 
+  function markStatChanged(statEl) {
+    if (!statEl) return;
+    statEl.classList.remove("changed");
+    // Force reflow so repeated updates can retrigger the animation.
+    void statEl.offsetWidth;
+    statEl.classList.add("changed");
+    setTimeout(() => statEl.classList.remove("changed"), 320);
+  }
+
   function gatherRackCounts() {
     let total = 0;
     let trouble = 0;
@@ -729,12 +739,30 @@
     if (Math.abs(state.money - displayMoney) < 0.5) displayMoney = state.money;
 
     const racks = gatherRackCounts();
+    const income = incomePerMinute();
+    const nextSnapshot = {
+      money: Math.floor(state.money),
+      income,
+      packets: state.totalPackets,
+      activeRacks: Math.max(0, racks.total - racks.trouble),
+      troubleRacks: racks.trouble
+    };
+
+    if (hudSnapshot) {
+      if (nextSnapshot.money !== hudSnapshot.money) markStatChanged(el.moneyValue.parentElement);
+      if (nextSnapshot.income !== hudSnapshot.income) markStatChanged(el.incomeValue.parentElement);
+      if (nextSnapshot.packets !== hudSnapshot.packets) markStatChanged(el.packetsValue.parentElement);
+      if (nextSnapshot.activeRacks !== hudSnapshot.activeRacks) markStatChanged(el.activeRacksValue.parentElement);
+      if (nextSnapshot.troubleRacks !== hudSnapshot.troubleRacks) markStatChanged(el.troubleRacksValue.parentElement);
+    }
+    hudSnapshot = nextSnapshot;
+
     el.moneyValue.textContent = formatMoney(displayMoney);
-    el.incomeValue.textContent = formatMoney(incomePerMinute());
+    el.incomeValue.textContent = formatMoney(income);
     el.packetsValue.textContent = state.totalPackets.toLocaleString();
     el.timeValue.textContent = formatClock(state.timeSeconds);
-    el.activeRacksValue.textContent = String(Math.max(0, racks.total - racks.trouble));
-    el.troubleRacksValue.textContent = String(racks.trouble);
+    el.activeRacksValue.textContent = String(nextSnapshot.activeRacks);
+    el.troubleRacksValue.textContent = String(nextSnapshot.troubleRacks);
     el.goalChip.textContent = goalText();
 
     if (racks.trouble > 0 && state.warningsFlash > 0) {

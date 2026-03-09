@@ -11,6 +11,7 @@
     <header class="hud">
       <div class="hud-left">
         <h1>Data Center Tycoon</h1>
+        <p class="tagline">Build, route, cool, and scale your packet empire.</p>
         <div class="stats-row">
           <div class="stat"><span>Money</span><strong id="moneyValue">$0</strong></div>
           <div class="stat"><span>Income/min</span><strong id="incomeValue">$0</strong></div>
@@ -30,6 +31,10 @@
 
     <main class="layout">
       <section class="board-wrap">
+        <div class="section-head">
+          <h2>Operations Grid</h2>
+          <p>Place infrastructure and keep racks stable.</p>
+        </div>
         <div class="toolbar" id="toolbar">
           <button class="tool active" data-tool="inspect">Inspect</button>
           <button class="tool" data-tool="cable">Cable <small>$5</small></button>
@@ -79,7 +84,7 @@
       <ul>
         <li>1. Use the same keyword to continue progress.</li>
         <li>2. Use a different keyword for a separate save.</li>
-        <li>3. All profiles are stored locally in your browser.</li>
+        <li>3. Profiles sync across devices through secure cloud storage.</li>
       </ul>
       <input id="keywordInput" class="text-input" type="password" maxlength="24" placeholder="Enter private keyword" autocomplete="off" />
       <p id="keywordStatus" class="status-line"></p>

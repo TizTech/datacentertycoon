@@ -260,11 +260,10 @@
   function refreshKeywordStatus() {
     const keys = getAllKeywords();
     if (!keys.length) {
-      el.keywordStatus.textContent = "No saves yet. Enter any keyword to create one.";
+      el.keywordStatus.textContent = "No profile found on this browser yet. Enter a keyword to create one.";
       return;
     }
-    const preview = keys.slice(0, 4).join(", ");
-    el.keywordStatus.textContent = `Stored profiles (${keys.length}): ${preview}`;
+    el.keywordStatus.textContent = "Private mode: saved keywords are never listed.";
   }
 
   function openKeywordOverlay() {
@@ -294,8 +293,8 @@
     setTool(TOOL.INSPECT);
     displayMoney = state.money;
     el.pauseBtn.textContent = "Pause";
-    pushActivity(existing ? `Loaded profile "${keyword}".` : `Created profile "${keyword}".`, "good");
-    showToast(existing ? `Loaded: ${keyword}` : `New save: ${keyword}`, "good");
+    pushActivity(`Profile unlocked.`, "good");
+    showToast("Profile loaded.", "good");
     saveGame();
     el.startOverlay.classList.remove("show");
     if (!localStorage.getItem(TUTORIAL_KEY)) {

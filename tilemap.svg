@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" shape-rendering="crispEdges">
+  <rect width="256" height="256" fill="#0b1020"/>
+
+  <!-- Tile 0: floor -->
+  <g transform="translate(0,0)">
+    <rect x="0" y="0" width="32" height="32" fill="#151b2e"/>
+    <rect x="2" y="2" width="28" height="28" fill="#1b2340"/>
+    <rect x="0" y="31" width="32" height="1" fill="#0f1424"/>
+    <rect x="31" y="0" width="1" height="32" fill="#0f1424"/>
+  </g>
+
+  <!-- Tile 1: wall -->
+  <g transform="translate(32,0)">
+    <rect x="0" y="0" width="32" height="32" fill="#2a2f3a"/>
+    <rect x="0" y="0" width="32" height="4" fill="#3b4252"/>
+    <rect x="0" y="28" width="32" height="4" fill="#1e222b"/>
+    <rect x="4" y="8" width="24" height="2" fill="#4c566a"/>
+    <rect x="4" y="14" width="24" height="2" fill="#4c566a"/>
+    <rect x="4" y="20" width="24" height="2" fill="#4c566a"/>
+  </g>
+
+  <!-- Tile 2: server rack -->
+  <g transform="translate(64,0)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="8" y="4" width="16" height="24" rx="1" fill="#0f1117"/>
+    <rect x="10" y="7" width="12" height="2" fill="#1f2430"/>
+    <rect x="10" y="11" width="12" height="2" fill="#1f2430"/>
+    <rect x="10" y="15" width="12" height="2" fill="#1f2430"/>
+    <rect x="10" y="19" width="12" height="2" fill="#1f2430"/>
+    <rect x="10" y="23" width="3" height="2" fill="#41d17d"/>
+    <rect x="15" y="23" width="3" height="2" fill="#4da3ff"/>
+    <rect x="20" y="23" width="2" height="2" fill="#ffd24d"/>
+  </g>
+
+  <!-- Tile 3: hub -->
+  <g transform="translate(96,0)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="6" y="6" width="20" height="20" rx="2" fill="#24304f"/>
+    <rect x="10" y="10" width="12" height="12" rx="1" fill="#4da3ff"/>
+    <rect x="14" y="4" width="4" height="4" fill="#7cc4ff"/>
+    <rect x="14" y="24" width="4" height="4" fill="#7cc4ff"/>
+    <rect x="4" y="14" width="4" height="4" fill="#7cc4ff"/>
+    <rect x="24" y="14" width="4" height="4" fill="#7cc4ff"/>
+  </g>
+
+  <!-- Tile 4: horizontal cable -->
+  <g transform="translate(128,0)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="2" y="14" width="28" height="4" fill="#f0b84b"/>
+    <rect x="2" y="15" width="28" height="2" fill="#ffd24d"/>
+  </g>
+
+  <!-- Tile 5: vertical cable -->
+  <g transform="translate(160,0)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="14" y="2" width="4" height="28" fill="#f0b84b"/>
+    <rect x="15" y="2" width="2" height="28" fill="#ffd24d"/>
+  </g>
+
+  <!-- Tile 6: cable corner -->
+  <g transform="translate(192,0)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="14" y="14" width="4" height="16" fill="#f0b84b"/>
+    <rect x="14" y="14" width="16" height="4" fill="#f0b84b"/>
+    <rect x="15" y="15" width="2" height="15" fill="#ffd24d"/>
+    <rect x="15" y="15" width="15" height="2" fill="#ffd24d"/>
+  </g>
+
+  <!-- Tile 7: cooler -->
+  <g transform="translate(224,0)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="6" y="6" width="20" height="20" rx="2" fill="#22313f"/>
+    <circle cx="16" cy="16" r="6" fill="#9ad9ff"/>
+    <rect x="15" y="9" width="2" height="14" fill="#22313f"/>
+    <rect x="9" y="15" width="14" height="2" fill="#22313f"/>
+  </g>
+
+  <!-- Tile 8: power unit -->
+  <g transform="translate(0,32)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="7" y="6" width="18" height="20" rx="2" fill="#3a2d1f"/>
+    <polygon points="17,8 11,17 15,17 13,24 21,14 17,14" fill="#ffd24d"/>
+  </g>
+
+  <!-- Tile 9: upgrade speed -->
+  <g transform="translate(32,32)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="6" y="6" width="20" height="20" rx="2" fill="#1f2c48"/>
+    <polygon points="10,16 18,10 18,14 22,14 22,18 18,18 18,22" fill="#4da3ff"/>
+  </g>
+
+  <!-- Tile 10: upgrade cooling -->
+  <g transform="translate(64,32)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="6" y="6" width="20" height="20" rx="2" fill="#1d3440"/>
+    <path d="M16 8 L18 14 L24 16 L18 18 L16 24 L14 18 L8 16 L14 14 Z" fill="#9ad9ff"/>
+  </g>
+
+  <!-- Tile 11: upgrade power -->
+  <g transform="translate(96,32)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="6" y="6" width="20" height="20" rx="2" fill="#3a2d1f"/>
+    <polygon points="17,8 12,16 16,16 14,24 21,14 17,14" fill="#ffd24d"/>
+  </g>
+
+  <!-- Tile 12: money tile -->
+  <g transform="translate(128,32)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <circle cx="16" cy="16" r="9" fill="#41d17d"/>
+    <rect x="15" y="10" width="2" height="12" fill="#0f1424"/>
+    <rect x="12" y="12" width="8" height="2" fill="#0f1424"/>
+    <rect x="12" y="18" width="8" height="2" fill="#0f1424"/>
+  </g>
+
+  <!-- Tile 13: warning / heat -->
+  <g transform="translate(160,32)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="8" y="8" width="16" height="16" fill="#ff7a59"/>
+    <rect x="15" y="11" width="2" height="7" fill="#151b2e"/>
+    <rect x="15" y="20" width="2" height="2" fill="#151b2e"/>
+  </g>
+
+  <!-- Tile 14: packet icon -->
+  <g transform="translate(192,32)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <circle cx="16" cy="16" r="6" fill="#7cc4ff"/>
+    <circle cx="16" cy="16" r="2" fill="#dff2ff"/>
+  </g>
+
+  <!-- Tile 15: empty build highlight -->
+  <g transform="translate(224,32)">
+    <rect width="32" height="32" fill="#151b2e"/>
+    <rect x="3" y="3" width="26" height="26" fill="none" stroke="#41d17d" stroke-width="2" stroke-dasharray="4 2"/>
+  </g>
+</svg>

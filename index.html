@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Center Tycoon</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="hud">
+      <div class="hud-left">
+        <h1>Data Center Tycoon</h1>
+        <div class="stats-row">
+          <div class="stat"><span>Money</span><strong id="moneyValue">$0</strong></div>
+          <div class="stat"><span>Income/min</span><strong id="incomeValue">$0</strong></div>
+          <div class="stat"><span>Packets</span><strong id="packetsValue">0</strong></div>
+          <div class="stat"><span>Time</span><strong id="timeValue">00:00</strong></div>
+          <div class="stat"><span>Active Racks</span><strong id="activeRacksValue">0</strong></div>
+          <div class="stat warning"><span>Trouble Racks</span><strong id="troubleRacksValue">0</strong></div>
+        </div>
+      </div>
+      <div class="hud-right">
+        <button id="pauseBtn" class="ui-btn">Pause</button>
+        <button id="saveBtn" class="ui-btn">Save</button>
+        <button id="resetBtn" class="ui-btn danger">Reset Save</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="board-wrap">
+        <div class="toolbar" id="toolbar">
+          <button class="tool active" data-tool="inspect">Inspect</button>
+          <button class="tool" data-tool="cable">Cable <small>$5</small></button>
+          <button class="tool" data-tool="rack">Server Rack <small>$50</small></button>
+          <button class="tool" data-tool="cooling">Cooling <small>$40</small></button>
+          <button class="tool" data-tool="power">Power <small>$40</small></button>
+          <button class="tool" data-tool="bulldoze">Bulldoze</button>
+          <button class="tool" id="upgradesBtn">Upgrades</button>
+        </div>
+        <div class="canvas-shell">
+          <canvas id="gameCanvas" width="640" height="448" aria-label="Data center map"></canvas>
+          <div class="goal-chip" id="goalChip"></div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <section class="panel-block">
+          <h2>Build Help</h2>
+          <p id="toolDesc">Inspect tiles and buildings.</p>
+          <div class="legend">
+            <div><span class="dot rack"></span>Rack: needs cable + power + cooling</div>
+            <div><span class="dot cable"></span>Cable: carries packets to hub</div>
+            <div><span class="dot cooling"></span>Cooling: reduces heat in radius</div>
+            <div><span class="dot power"></span>Power: supplies racks in radius</div>
+          </div>
+        </section>
+        <section class="panel-block">
+          <h2>Inspect</h2>
+          <div id="inspectContent" class="inspect-empty">Select a tile or building.</div>
+        </section>
+        <section class="panel-block">
+          <h2>Global Upgrades</h2>
+          <div id="upgradeSummary" class="upgrade-summary"></div>
+        </section>
+        <section class="panel-block">
+          <h2>Activity</h2>
+          <div id="activityFeed" class="activity-feed"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="overlay show" id="startOverlay">
+    <div class="modal">
+      <h2>Data Center Tycoon</h2>
+      <p>Build a compact, efficient network. Deliver packets to the hub to earn money.</p>
+      <ul>
+        <li>1. Place <strong>Power</strong> and <strong>Cooling</strong></li>
+        <li>2. Place <strong>Cables</strong> connected to the hub</li>
+        <li>3. Place a <strong>Server Rack</strong> on the cable network</li>
+        <li>4. Upgrade and scale without overheating</li>
+      </ul>
+      <div class="modal-actions">
+        <button id="newGameBtn" class="ui-btn primary">New Game</button>
+        <button id="continueBtn" class="ui-btn">Continue Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="tutorialOverlay">
+    <div class="modal">
+      <h2>Quick Tutorial</h2>
+      <p>Packets only spawn when a rack is connected to the hub and has enough power + cooling.</p>
+      <p>Use Inspect mode to check rack status and bottlenecks.</p>
+      <div class="modal-actions">
+        <button id="tutorialCloseBtn" class="ui-btn primary">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="upgradeOverlay">
+    <div class="modal">
+      <h2>Global Upgrades</h2>
+      <div class="upgrade-grid">
+        <button class="upgrade-btn" data-upgrade="networkSpeed">
+          <span>Network Speed</span>
+          <small id="cost-networkSpeed"></small>
+          <em id="effect-networkSpeed"></em>
+        </button>
+        <button class="upgrade-btn" data-upgrade="coolingEfficiency">
+          <span>Cooling Efficiency</span>
+          <small id="cost-coolingEfficiency"></small>
+          <em id="effect-coolingEfficiency"></em>
+        </button>
+        <button class="upgrade-btn" data-upgrade="powerEfficiency">
+          <span>Power Efficiency</span>
+          <small id="cost-powerEfficiency"></small>
+          <em id="effect-powerEfficiency"></em>
+        </button>
+        <button class="upgrade-btn" data-upgrade="packetValue">
+          <span>Packet Compression</span>
+          <small id="cost-packetValue"></small>
+          <em id="effect-packetValue"></em>
+        </button>
+      </div>
+      <div class="modal-actions">
+        <button id="closeUpgradesBtn" class="ui-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="failureOverlay">
+    <div class="modal">
+      <h2>System Failure</h2>
+      <p>The facility stayed unstable for too long. Critical racks shut down.</p>
+      <div class="modal-actions">
+        <button id="loadAutosaveBtn" class="ui-btn primary">Load Autosave</button>
+        <button id="restartBtn" class="ui-btn danger">Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastLayer" class="toast-layer"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
